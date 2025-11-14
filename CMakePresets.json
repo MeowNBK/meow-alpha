@@ -1,0 +1,51 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "debug-linux",
+      "displayName": "Debug Build (Clang, native Linux)",
+      "description": "Fast debugging with Clang on Linux.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/debug-linux",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g3 -O0 -Wall -Wextra -Wpedantic -fno-omit-frame-pointer -fsanitize=address,undefined"
+      }
+    },
+    {
+      "name": "release-linux",
+      "displayName": "Release Build (GCC, native Linux, static)",
+      "description": "Optimized release build with GCC for broad Linux compatibility.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release-linux",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -flto -static-libgcc -static-libstdc++"
+      }
+    },
+    {
+      "name": "release-mingw",
+      "displayName": "Release Build (MinGW x86_64, static)",
+      "description": "Cross-compile for Windows with static libraries.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release-mingw",
+	"cacheVariables": {
+	  "CMAKE_BUILD_TYPE": "Release",
+	  "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+	  "CMAKE_EXE_LINKER_FLAGS_RELEASE": "-static-libgcc -static-libstdc++",
+	  "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+	  "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/../cache/mingw-toolchain.cmake"
+	}
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug-linux", "configurePreset": "debug-linux" },
+    { "name": "release-linux", "configurePreset": "release-linux" },
+    { "name": "release-mingw", "configurePreset": "release-mingw" }
+  ]
+}
