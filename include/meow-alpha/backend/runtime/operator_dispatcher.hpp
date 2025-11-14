@@ -1,51 +1,64 @@
 #pragma once
 
-#include "runtime/value.hpp" 
-#include "common/token.hpp" 
-#include <map>
-#include <functional>
+#include "runtime/value.hpp"
+#include "common/token.hpp"
+#include "runtime/overload.hpp"
 #include <string>
+#include <variant>
 
 enum class ValueType {
-    Null, Int, Real, Bool, String, Array, Object, Function, Instance, Class, BoundMethod
+    Null, Int, Real, Bool, String, Array, Object, Function, Instance, Class, BoundMethod, Total
 };
 
-ValueType getValueType(const Value& value);
-std::string getBinaryOperatorMethodName(TokenType opType);
-std::string getUnaryOperatorMethodName(TokenType opType);
+inline ValueType get_value_type(const Value& value) noexcept {
+    return std::visit(overloaded{
+        [](Null) { return ValueType::Null; },
+        [](Int) { return ValueType::Int; },
+        [](Real) { return ValueType::Real; },
+        [](Bool) { return ValueType::Bool; },
+        [](const String&) { return ValueType::String; },
+        [](const Array&) { return ValueType::Array; },
+        [](const Object&) { return ValueType::Object; },
+        [](const Function&) { return ValueType::Function; },
+        [](const Instance&) { return ValueType::Instance; },
+        [](const Class&) { return ValueType::Class; },
+        [](const BoundMethod&) { return ValueType::BoundMethod; }
+    }, static_cast<const BaseValue&>(value));
+}
 
-struct BinaryOperationKey {
-    TokenType op;
-    ValueType left;
-    ValueType right;
-    
-    bool operator<(const BinaryOperationKey& other) const {
-        if (op != other.op) return op < other.op;
-        if (left != other.left) return left < other.left;
-        return right < other.right;
-    }
-};
+using BinaryOpFunction = Value (*)(const Value&, const Value&);
+using UnaryOpFunction = Value (*)(const Value&);
 
-struct UnaryOperationKey {
-    TokenType op;
-    ValueType right;
-    
-    bool operator<(const UnaryOperationKey& other) const {
-        if (op != other.op) return op < other.op;
-        return right < other.right;
-    }
-};
+constexpr size_t NUM_TOKEN_TYPES = static_cast<size_t>(TokenType::_TOTAL_TOKENS);
+constexpr size_t NUM_VALUE_TYPES = static_cast<size_t>(ValueType::Total);
 
-using BinaryOpFunc = std::function<Value(const Value&, const Value&)>;
-using UnaryOpFunc = std::function<Value(const Value&)>;
+[[nodiscard]] inline constexpr size_t operator+(TokenType op_code) noexcept {
+    return static_cast<size_t>(op_code);
+}
+[[nodiscard]] inline constexpr size_t operator+(ValueType value_type) noexcept {
+    return static_cast<size_t>(value_type);
+}
 
 class OperatorDispatcher {
+private:
+    BinaryOpFunction binary_dispatch_table_[NUM_TOKEN_TYPES][NUM_VALUE_TYPES][NUM_VALUE_TYPES];
+    UnaryOpFunction unary_dispatch_table_[NUM_TOKEN_TYPES][NUM_VALUE_TYPES];
+
 public:
-    std::map<BinaryOperationKey, BinaryOpFunc> binaryOps;
-    std::map<UnaryOperationKey, UnaryOpFunc> unaryOps;
+    OperatorDispatcher() noexcept;
+    [[nodiscard]] inline const BinaryOpFunction* find(TokenType op, const Value& left, const Value& right) const noexcept {
+        auto left_type = get_value_type(left);
+        auto right_type = get_value_type(right);
+        
+        const BinaryOpFunction* function =
+            &binary_dispatch_table_[+op][+left_type][+right_type];
+        return function;
+    }
 
-    OperatorDispatcher();
+    [[nodiscard]] inline const UnaryOpFunction* find(TokenType op, const Value& right) const noexcept {
+        auto right_type = get_value_type(right);
 
-    BinaryOpFunc* find(TokenType op, const Value& left, const Value& right);
-    UnaryOpFunc* find(TokenType op, const Value& right);
+        const UnaryOpFunction* function = &unary_dispatch_table_[+op][+right_type];
+        return function;
+    }
 };

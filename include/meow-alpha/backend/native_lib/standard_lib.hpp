@@ -52,8 +52,3 @@ class JsonLib: public NativeLibrary {
 public:
     JsonLib();
 };
-
-class MetaLib: public NativeLibrary {
-public:
-    MetaLib();
-};

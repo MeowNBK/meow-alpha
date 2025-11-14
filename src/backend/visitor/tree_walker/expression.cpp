@@ -13,19 +13,6 @@ Value TreeWalker::visit(Identifier* node) {
 Value TreeWalker::visit(UnaryExpression* node) {
     Value right = evaluate(node->operand.get());
 
-    if (std::holds_alternative<Instance>(right)) {
-        std::string methodName = getUnaryOperatorMethodName(node->op);
-        
-        if (!methodName.empty()) {
-            Instance inst = std::get<Instance>(right);
-            Function method = inst->klass->findMethod(methodName);
-            
-            if (method != nullptr) {
-                return MeowScriptBoundMethod(inst, method).call(this, {});
-            }
-        }
-    }
-
     if (auto opFunc = opDispatcher->find(node->op, right)) {
         return (*opFunc)(right);
     }
@@ -63,19 +50,6 @@ Value TreeWalker::visit(BinaryExpression* node) {
 
     Value left = evaluate(node->left.get());
     Value right = evaluate(node->right.get());
-
-    if (std::holds_alternative<Instance>(left)) {
-        std::string methodName = getBinaryOperatorMethodName(node->op);
-        
-        if (!methodName.empty()) {
-            Instance inst = std::get<Instance>(left);
-            Function method = inst->klass->findMethod(methodName);
-            
-            if (method != nullptr) {
-                return MeowScriptBoundMethod(inst, method).call(this, {right});
-            }
-        }
-    }
 
     if (auto opFunc = opDispatcher->find(node->op, left, right)) {
         return (*opFunc)(left, right);

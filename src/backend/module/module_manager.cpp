@@ -48,7 +48,6 @@ ModuleManager::ModuleManager() {
     nativeModules.emplace("system", std::make_unique<NativeLibrary>(SystemLib()));
     nativeModules.emplace("random", std::make_unique<NativeLibrary>(RandomLib()));
     nativeModules.emplace("json", std::make_unique<NativeLibrary>(JsonLib()));
-    nativeModules.emplace("meta", std::make_unique<NativeLibrary>(MetaLib()));
 
     initNativeMethods(
         *nativeModules["array"],

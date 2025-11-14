@@ -9,147 +9,148 @@ using enum TokenType;
 
 Lexer::Lexer(SrcFilePtr sourceFile): 
     srcFile(std::move(sourceFile)), 
-    src(srcFile->getBuffer()), 
-    filename(srcFile->name()),
-    pos(0), 
-    currChar(srcFile->getBuffer().empty() ? '\0' : srcFile->getBuffer()[0]), 
-    line(1), col(1) 
+    src_(srcFile->getBuffer()), 
+    filename_(srcFile->name()),
+    pos_(0), 
+    curr_char_(srcFile->getBuffer().empty() ? '\0' : srcFile->getBuffer()[0]), 
+    line_(1), col_(1),
+    start_line_(1), start_col_(1)
 {}
 
-void Lexer::advance() {
-    if (currChar == '\n') {
-        ++line;
-        col = 1;
+void Lexer::advance() noexcept {
+    if (curr_char_ == '\n') {
+        ++line_;
+        col_ = 1;
     } else {
-        ++col;
+        ++col_;
     }
-    ++pos;
-    currChar = pos < src.size() ? src[pos] : '\0';
+    ++pos_;
+    curr_char_ = pos_ < src_.size() ? src_[pos_] : '\0';
 }
 
-char Lexer::peek() const{
-    size_t next = pos + 1;
-    return next < src.size() ? src[next] : '\0';
+unsigned char Lexer::peek() const noexcept {
+    size_t next = pos_ + 1;
+    return next < src_.size() ? src_[next] : '\0';
 }
 
-void Lexer::skipWhiteSpace() {
-    while (std::isspace(currChar)) {
+void Lexer::skip_whitespace() noexcept {
+    while (std::isspace(curr_char_)) {
         advance();
     }
 }
 
-void Lexer::skipLineComment() {
+void Lexer::skip_line_comment() noexcept {
     advance(); advance();
-    while (currChar != '\n' && currChar != '\0') {
+    while (curr_char_ != '\n' && curr_char_ != '\0') {
         advance();
     }
 }
 
-void Lexer::skipBlockComment() {
+void Lexer::skip_block_comment() noexcept {
     advance(); advance();
 
-    while (!(currChar == '*' && peek() == '/') && currChar != '\0') {
+    while (!(curr_char_ == '*' && peek() == '/') && curr_char_ != '\0') {
         advance();
     }
 
-    if (currChar != '\0' && peek() != '\0') {
+    if (curr_char_ != '\0' && peek() != '\0') {
         advance(); advance();
     }
 }
 
-inline Token Lexer::makeToken(TokenType type, const std::string &lex, size_t startLine, size_t startCol) {
-    return {type, lex, filename, startLine, startCol, srcFile};
+inline Token Lexer::make_token(TokenType type, const std::string &lex) noexcept {
+    return { type, lex, filename_, start_line_, start_col_, srcFile };
 }
 
-Token Lexer::identifier(size_t startLine, size_t startCol) {
-    std::string lex = std::string(1, currChar);
+Token Lexer::identifier() {
+    std::string lex = std::string(1, curr_char_);
     advance();
-    while (std::isalnum(static_cast<unsigned char>(currChar)) || currChar == '_') {
-        lex += currChar;
+    while (std::isalnum(curr_char_) || curr_char_ == '_') {
+        lex += curr_char_;
         advance();
     }
     
     if (auto it = keywords.find(lex); it != keywords.end()) {
-        return makeToken(it->second, lex, startLine, startCol);
+        return make_token(it->second, lex);
     }
 
-    return makeToken(IDENTIFIER, lex, startLine, startCol);
+    return make_token(IDENTIFIER, lex);
 }
 
-Token Lexer::number(size_t startLine, size_t startCol) { 
+Token Lexer::number() { 
     std::string lex;
     bool isReal = false;
 
-    if (currChar == '0') {
-        lex += currChar;
+    if (curr_char_ == '0') {
+        lex += curr_char_;
         advance();
 
-        if (currChar == 'x' || currChar == 'X') {
-            lex += currChar;
+        if (curr_char_ == 'x' || curr_char_ == 'X') {
+            lex += curr_char_;
             advance();
-            while (std::isxdigit(static_cast<unsigned char>(currChar)) || currChar == '_') {
-                if (currChar != '_') lex += currChar;
+            while (std::isxdigit(curr_char_) || curr_char_ == '_') {
+                if (curr_char_ != '_') lex += curr_char_;
                 advance();
             }
-            return makeToken(INTEGER, lex, startLine, startCol);
+            return make_token(INTEGER, lex);
         }
-        else if (currChar == 'b' || currChar == 'B') {
-            lex += currChar;
+        else if (curr_char_ == 'b' || curr_char_ == 'B') {
+            lex += curr_char_;
             advance();
-            while (currChar == '0' || currChar == '1' || currChar == '_') {
-                if (currChar != '_') lex += currChar;
+            while (curr_char_ == '0' || curr_char_ == '1' || curr_char_ == '_') {
+                if (curr_char_ != '_') lex += curr_char_;
                 advance();
             }
-            return makeToken(INTEGER, lex, startLine, startCol);
+            return make_token(INTEGER, lex);
         }
-        else if (currChar == 'o' || currChar == 'O') {
-            lex += currChar;
+        else if (curr_char_ == 'o' || curr_char_ == 'O') {
+            lex += curr_char_;
             advance();
-            while ((currChar >= '0' && currChar <= '7') || currChar == '_') {
-                if (currChar != '_') lex += currChar;
+            while ((curr_char_ >= '0' && curr_char_ <= '7') || curr_char_ == '_') {
+                if (curr_char_ != '_') lex += curr_char_;
                 advance();
             }
-            return makeToken(INTEGER, lex, startLine, startCol);
+            return make_token(INTEGER, lex);
         }
     }
 
-    while (std::isdigit(static_cast<unsigned char>(currChar)) || currChar == '_' || currChar == '.') {
-        if (currChar == '.') {
+    while (std::isdigit(curr_char_) || curr_char_ == '_' || curr_char_ == '.') {
+        if (curr_char_ == '.') {
             if (isReal) break;
             isReal = true;
             if (!std::isdigit(peek())) break;
         }
 
-        if (currChar != '_') lex += currChar;
+        if (curr_char_ != '_') lex += curr_char_;
         advance();
     }
 
-    if (currChar == 'e' || currChar == 'E') {
+    if (curr_char_ == 'e' || curr_char_ == 'E') {
         isReal = true;
-        lex += currChar;
+        lex += curr_char_;
         advance();
-        if (currChar == '+' || currChar == '-') {
-            lex += currChar;
+        if (curr_char_ == '+' || curr_char_ == '-') {
+            lex += curr_char_;
             advance();
         }
-        while (std::isdigit(static_cast<unsigned char>(currChar)) || currChar == '_') {
-            if (currChar != '_') lex += currChar;
+        while (std::isdigit(curr_char_) || curr_char_ == '_') {
+            if (curr_char_ != '_') lex += curr_char_;
             advance();
         }
     }
 
-    return makeToken(isReal ? REAL : INTEGER, lex, startLine, startCol);
+    return make_token(isReal ? REAL : INTEGER, lex);
 }
 
-Token Lexer::stringLiteral(char delimiter, size_t startLine, size_t startCol) {
+Token Lexer::string_literal(unsigned char delimiter) {
     advance();
 
     std::string lex = "";
 
-    while (currChar != delimiter && currChar != '\0') {
-        if (currChar == '\\') {
+    while (curr_char_ != delimiter && curr_char_ != '\0') {
+        if (curr_char_ == '\\') {
             advance();
-            switch (currChar) {
+            switch (curr_char_) {
                 case '\\': lex += '\\'; break;
                 case '"': lex += (delimiter == '"') ? "\"" : "\\\""; break;
                 case '\'': lex += (delimiter == '\'') ? "'" : "\\'"; break;
@@ -159,44 +160,44 @@ Token Lexer::stringLiteral(char delimiter, size_t startLine, size_t startCol) {
                 case '0': lex += '\0'; break;
                 default:
                     lex += '\\';
-                    lex += currChar;
+                    lex += curr_char_;
             }
         } else {
-            lex += currChar;
+            lex += curr_char_;
         }
 
         advance();
     }
 
-    if (currChar == delimiter) {
+    if (curr_char_ == delimiter) {
         advance();
     }
 
-    return makeToken(STRING, lex, startLine, startCol);
+    return make_token(STRING, lex);
 }
 
-Token Lexer::punctuator(size_t startLine, size_t startCol) {
+Token Lexer::punctuator() {
     for (int len = 3; len >= 1; --len) {
-        std::string lex = src.substr(pos, len);
+        std::string lex = src_.substr(pos_, len);
         auto it = symbols.find(lex);
 
         if (it != symbols.end()) {
             for (int i = 0; i < len; ++i) {
                 advance();
             }
-            return makeToken(it->second, lex, startLine, startCol);
+            return make_token(it->second, lex);
         }
     }
 
-    return makeToken(UNKNOWN, "", startLine, startCol);
+    return make_token(UNKNOWN, "");
 }
 
-Token Lexer::templateStringLiteral(size_t startLine, size_t startCol) {
+Token Lexer::template_string() {
     std::string lex = "";
-    while (currChar != '`' && currChar != '\0' && !(currChar == '%' && peek() == '{')) {
-        if (currChar == '\\') {
+    while (curr_char_ != '`' && curr_char_ != '\0' && !(curr_char_ == '%' && peek() == '{')) {
+        if (curr_char_ == '\\') {
             advance();
-            switch (currChar) {
+            switch (curr_char_) {
                 case '\\': lex += '\\'; break;
                 case '`': lex += '`'; break;
                 case 'n': lex += '\n'; break;
@@ -205,112 +206,101 @@ Token Lexer::templateStringLiteral(size_t startLine, size_t startCol) {
                 case '0': lex += '\0'; break;
                 default:
                     lex += '\\';
-                    lex += currChar;
+                    lex += curr_char_;
             }
         } else {
-            lex += currChar;
+            lex += curr_char_;
         }
 
         advance();
     }
-    return makeToken(STRING, lex, startLine, startCol);
+    return make_token(STRING, lex);
 }
 
-Token Lexer::rawStringLiteral(char delimiter, size_t startLine, size_t startCol) {
+Token Lexer::raw_string(unsigned char delimiter) {
     std::string lex = "";
     advance();
-    while (currChar != delimiter && currChar != '\0') {
-        lex += currChar;
+    while (curr_char_ != delimiter && curr_char_ != '\0') {
+        lex += curr_char_;
         advance();
     }
-    if (currChar == delimiter) {
+    if (curr_char_ == delimiter) {
         advance();
     }
-    return makeToken(STRING, lex, startLine, startCol);
+    return make_token(STRING, lex);
 }
 
-Token Lexer::nextToken() {
-    size_t startLine, startCol;
-
-    auto createToken = [&startLine, &startCol, this](TokenType type, const std::string &lexeme) {
-        return makeToken(type, lexeme, startLine, startCol);
-    };
-
-    if (!isInTemplateMode) {
-        skipWhiteSpace();
+Token Lexer::next_token() {
+    if (!is_in_template_mode_) skip_whitespace();
+    start_line_ = line_; 
+    start_col_ = col_;
+    if (is_in_expression_ && curr_char_ == '}') {
+        is_in_template_mode_ = true;
+        is_in_expression_ = false;
+        Token token = make_token(PUNCT_RBRACE, "}");
+        advance();
+        return token;
     }
-    
-    startLine = line; 
-    startCol = col;
 
-        if (isInExpression && currChar == '}') {
-            isInTemplateMode = true;
-            isInExpression = false;
-            Token token = createToken(PUNCT_RBRACE, "}");
+    if (is_in_template_mode_) {
+        if (curr_char_ == '`') {
+            is_in_template_mode_ = false;
+            Token token = make_token(PUNCT_BACKTICK, "`");
             advance();
             return token;
+        } else if (curr_char_ == '%' && peek() == '{') {
+            is_in_template_mode_ = false;
+            is_in_expression_ = true;
+            advance(); advance();
+            return make_token(PUNCT_PERCENT_LBRACE, "%{");
         }
 
-        if (isInTemplateMode) {
-            if (currChar == '`') {
-                isInTemplateMode = false;
-                Token token = createToken(PUNCT_BACKTICK, "`");
-                advance();
-                return token;
-            } else if (currChar == '%' && peek() == '{') {
-                isInTemplateMode = false;
-                isInExpression = true;
-                advance(); advance();
-                return createToken(PUNCT_PERCENT_LBRACE, "%{");
-            }
-
-            return templateStringLiteral(startLine, startCol);
-        } else {
-        if (currChar == '\0') {
-            return createToken(END_OF_FILE, "");
-        } else if ((currChar == 'r' || currChar == 'R') && (peek() == '"' || peek() == '\'')) {
+        return template_string();
+    } else {
+        if (curr_char_ == '\0') {
+            return make_token(END_OF_FILE, "");
+        } else if ((curr_char_ == 'r' || curr_char_ == 'R') && (peek() == '"' || peek() == '\'')) {
             advance();
-            return rawStringLiteral(currChar, startLine, startCol);
-        } else if (std::isalpha(static_cast<unsigned char>(currChar)) || currChar == '_') {
-            return identifier(startLine, startCol);
-        } else if (std::isdigit(static_cast<unsigned char>(currChar))) {
-            return number(startLine, startCol);
+            return raw_string(curr_char_);
+        } else if (std::isalpha(curr_char_) || curr_char_ == '_') {
+            return identifier();
+        } else if (std::isdigit(curr_char_)) {
+            return number();
         } else {
-            switch (currChar) {
+            switch (curr_char_) {
                 case '`': {
-                    isInTemplateMode = true;
-                    Token token = createToken(PUNCT_BACKTICK, "`");
+                    is_in_template_mode_ = true;
+                    Token token = make_token(PUNCT_BACKTICK, "`");
                     advance();
                     return token;
                 }
                 case '"':
-                    return stringLiteral('"', startLine, startCol);
+                    return string_literal('"');
                 case '\'':
-                    return stringLiteral('\'', startLine, startCol);
+                    return string_literal('\'');
                 case '/':
                     if (peek() == '/') {
-                        skipLineComment();
-                        return nextToken();
+                        skip_line_comment();
+                        return next_token();
                     } else if (peek() == '*') {
-                        skipBlockComment();
-                        return nextToken();
+                        skip_block_comment();
+                        return next_token();
                     }
-                    return punctuator(startLine, startCol);
+                    return punctuator();
                 default:
-                    return punctuator(startLine, startCol);              
+                    return punctuator();              
             }
         }
     }
 }
 
 std::vector<Token> Lexer::tokenize() {
-    isInTemplateMode = false;
-    isInExpression = false;
-    pendingTemplateExpr = false;
+    is_in_template_mode_ = false;
+    is_in_expression_ = false;
     std::vector<Token> tokens;
 
     while (true) {
-        Token token = nextToken();
+        Token token = next_token();
 
         tokens.push_back(token);
 
