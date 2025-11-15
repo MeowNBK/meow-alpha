@@ -40,13 +40,10 @@ static std::vector<std::string> splitEnvPaths(const std::string& s) {
 /* --- Thay constructor mặc định --- */
 ModuleManager::ModuleManager() {
     nativeModules.emplace("io", std::make_unique<NativeLibrary>(IoLib()));
-    nativeModules.emplace("math", std::make_unique<NativeLibrary>(MathLib()));
     nativeModules.emplace("array", std::make_unique<NativeLibrary>(ArrayLib()));
     nativeModules.emplace("object", std::make_unique<NativeLibrary>(ObjectLib()));
     nativeModules.emplace("string", std::make_unique<NativeLibrary>(StringLib()));
-    nativeModules.emplace("time", std::make_unique<NativeLibrary>(TimeLib()));
     nativeModules.emplace("system", std::make_unique<NativeLibrary>(SystemLib()));
-    nativeModules.emplace("random", std::make_unique<NativeLibrary>(RandomLib()));
     nativeModules.emplace("json", std::make_unique<NativeLibrary>(JsonLib()));
 
     initNativeMethods(

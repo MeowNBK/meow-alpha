@@ -8,11 +8,6 @@ public:
     CoreLib();
 };
 
-class MathLib: public NativeLibrary {
-public:
-    MathLib();
-};
-
 class StringLib: public NativeLibrary {
 public:
     StringLib();
@@ -36,16 +31,6 @@ public:
 class SystemLib: public NativeLibrary {
 public:
     SystemLib();
-};
-
-class TimeLib: public NativeLibrary {
-public:
-    TimeLib();
-};
-
-class RandomLib: public NativeLibrary {
-public:
-    RandomLib();
 };
 
 class JsonLib: public NativeLibrary {
