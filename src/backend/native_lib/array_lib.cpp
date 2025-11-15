@@ -3,8 +3,6 @@
 #include "diagnostics/meow_exceptions.hpp"
 #include <sstream>
 
-
-
 Value native_array_push(Arguments args) {
     auto& arr = std::get<Array>(args[0]);
     for (size_t i = 1; i < args.size(); ++i) {

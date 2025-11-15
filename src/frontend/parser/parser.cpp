@@ -127,19 +127,19 @@ void Parser::initRules() {
     rules[OP_RSHIFT]         = { nullptr, &Parser::binary, BITWISE_SHIFT };
     rules[OP_BIT_NOT]        = { &Parser::unary,  nullptr, UNARY };
 
-    rules[OP_PLUS_ASSIGN]     =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_MINUS_ASSIGN]    =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_MULTIPLY_ASSIGN] =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_DIVIDE_ASSIGN]   =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_MODULO_ASSIGN]   =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_MODULO_ASSIGN]   =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_EXPONENT_ASSIGN]   =   { nullptr, &Parser::compoundAssignment, ASSIGN };
+    rules[OP_PLUS_ASSIGN]     =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_MINUS_ASSIGN]    =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_MULTIPLY_ASSIGN] =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_DIVIDE_ASSIGN]   =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_MODULO_ASSIGN]   =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_MODULO_ASSIGN]   =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_EXPONENT_ASSIGN]   =   { nullptr, &Parser::assignment, ASSIGN };
 
-    rules[OP_AND_ASSIGN]      =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_OR_ASSIGN]       =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_XOR_ASSIGN]      =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_LSHIFT_ASSIGN]   =   { nullptr, &Parser::compoundAssignment, ASSIGN };
-    rules[OP_RSHIFT_ASSIGN]   =   { nullptr, &Parser::compoundAssignment, ASSIGN };
+    rules[OP_AND_ASSIGN]      =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_OR_ASSIGN]       =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_XOR_ASSIGN]      =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_LSHIFT_ASSIGN]   =   { nullptr, &Parser::assignment, ASSIGN };
+    rules[OP_RSHIFT_ASSIGN]   =   { nullptr, &Parser::assignment, ASSIGN };
 
     rules[OP_EQ]           = { nullptr,          &Parser::binary, COMPARISON };
     rules[OP_NEQ]          = { nullptr,          &Parser::binary, COMPARISON };

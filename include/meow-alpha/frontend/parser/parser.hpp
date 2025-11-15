@@ -47,7 +47,6 @@ private:
 
     static ExprPtr binary(Parser *parser, ExprPtr left);
     static ExprPtr assignment(Parser *parser, ExprPtr left);
-    static ExprPtr compoundAssignment(Parser *parser, ExprPtr left);
     static ExprPtr call(Parser *parser, ExprPtr left);
     static ExprPtr index(Parser *parser, ExprPtr left);
     static ExprPtr access(Parser *parser, ExprPtr left);

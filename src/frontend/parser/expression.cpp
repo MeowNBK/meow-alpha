@@ -186,41 +186,6 @@ ExprPtr Parser::assignment(Parser* parser, ExprPtr left) {
     throw Diagnostic::ParseErr("Đối tượng được gán không hợp lệ!", op);
 }
 
-ExprPtr Parser::compoundAssignment(Parser* parser, ExprPtr left) {
-    const Token& op = parser->previous();
-
-    if (left->type != EXPR_IDENTIFIER && left->type != EXPR_INDEX && left->type != EXPR_PROPERTY_ACCESS) {
-        throw Diagnostic::ParseErr("Đối tượng được gán không hợp lệ đâu! Thử cái khác đi bạn!", op);
-    }
-
-    ExprPtr rightValue = parser->parsePrecedence((Precedence)(static_cast<int>(Precedence::ASSIGN) - 1));
-
-    TokenType opType;
-    switch (op.type) {
-        case OP_PLUS_ASSIGN:   opType = OP_PLUS; break;
-        case OP_MINUS_ASSIGN:  opType = OP_MINUS; break;
-        case OP_MULTIPLY_ASSIGN: opType = OP_MULTIPLY; break;
-        case OP_DIVIDE_ASSIGN: opType = OP_DIVIDE; break;
-        case OP_MODULO_ASSIGN: opType = OP_MODULO; break;
-        case OP_EXPONENT_ASSIGN: opType = OP_EXPONENT; break;
-
-        case OP_AND_ASSIGN: opType = OP_BIT_AND; break;
-        case OP_OR_ASSIGN:  opType = OP_BIT_OR; break;
-        case OP_XOR_ASSIGN: opType = OP_BIT_XOR; break;
-        case OP_LSHIFT_ASSIGN:  opType = OP_LSHIFT; break;
-        case OP_RSHIFT_ASSIGN: opType = OP_RSHIFT; break;
-        default:
-            throw Diagnostic::ParseErr("Ayya, toán tử gán này tôi chưa hỗ trợ. Hay là bạn bảo tôi bổ sung nhá!", op);
-    }
-    ExprPtr leftCloned = ExprPtr(dynamic_cast<Expression*>(left->clone().release()));
-
-    Token opToken = Token(opType, op.lexeme, op.filename, op.line, op.col, op.srcFile);
-    ExprPtr expr = std::make_unique<BinaryExpression>(opToken, std::move(leftCloned), std::move(rightValue));
-
-    Token assignToken = Token(OP_ASSIGN, "=", op.filename, op.line, op.col, op.srcFile);
-    return std::make_unique<AssignmentExpression>(assignToken, std::move(left), std::move(expr));
-}
-
 ExprPtr Parser::call(Parser* parser, ExprPtr left) {
     std::vector<ExprPtr> args;
 

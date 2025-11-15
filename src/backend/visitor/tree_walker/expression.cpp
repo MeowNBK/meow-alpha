@@ -129,10 +129,45 @@ Value TreeWalker::visit(IndexExpression* node) {
 Value TreeWalker::visit(AssignmentExpression* node) {
     try {
         LValue target = resolveLValue(node->target.get());
-        Value value = evaluate(node->value.get());
+        Value rvalue = evaluate(node->value.get());
 
-        target.setter(value);
-        return value;
+        Value finalValue;
+
+        if (node->token.type == TokenType::OP_ASSIGN) {
+            finalValue = rvalue; // Gán thường: a = b
+        } else {
+            Value lvalue = target.currentValue;
+            
+            TokenType opType = TokenType::UNKNOWN;
+            switch (node->token.type) {
+                case TokenType::OP_PLUS_ASSIGN:   opType = TokenType::OP_PLUS; break;
+                case TokenType::OP_MINUS_ASSIGN:  opType = TokenType::OP_MINUS; break;
+                case TokenType::OP_MULTIPLY_ASSIGN: opType = TokenType::OP_MULTIPLY; break;
+                case TokenType::OP_DIVIDE_ASSIGN: opType = TokenType::OP_DIVIDE; break;
+                case TokenType::OP_MODULO_ASSIGN: opType = TokenType::OP_MODULO; break;
+                case TokenType::OP_EXPONENT_ASSIGN: opType = TokenType::OP_EXPONENT; break;
+                case TokenType::OP_AND_ASSIGN: opType = TokenType::OP_BIT_AND; break;
+                case TokenType::OP_OR_ASSIGN:  opType = TokenType::OP_BIT_OR; break;
+                case TokenType::OP_XOR_ASSIGN: opType = TokenType::OP_BIT_XOR; break;
+                case TokenType::OP_LSHIFT_ASSIGN:  opType = TokenType::OP_LSHIFT; break;
+                case TokenType::OP_RSHIFT_ASSIGN: opType = TokenType::OP_RSHIFT; break;
+                default:
+                    throwRuntimeErr(node->token, "Toán tử gán này... lạ quá tớ chưa biết!");
+            }
+            
+            if (auto opFunc = opDispatcher->find(opType, lvalue, rvalue)) {
+                finalValue = (*opFunc)(lvalue, rvalue);
+            } else {
+                std::ostringstream os;
+                os << "Không thể thực hiện phép toán gán kép '" << node->token.lexeme 
+                   << "' với '" << lvalue << "' và '" << rvalue << "'.";
+                throwRuntimeErr(node->token, os.str());
+            }
+        }
+        
+        target.setter(finalValue);
+        return finalValue;
+
     } catch (const FunctionException& e) {
         throw Diagnostic::RuntimeErr(e.what(), node->token);
     } catch (const std::runtime_error& e) {
